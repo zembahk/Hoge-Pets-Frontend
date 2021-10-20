@@ -51,21 +51,31 @@ function renderPet(item, petId, petName, LastAte, CurrentBlock, WaitTime){
     //petUpdate(petId, contract);
     //const IsFed= await contract.methods.getIsFed(petId).call();
     //const CanGrow = await contract.methods.getCanGrow(petId).call();
-console.log(CurrentBlock - LastAte > WaitTime / 3  + Some);
-    if (CurrentBlock - LastAte > WaitTime / 3  + Some) {
-        feedButton = `<a href="./feed.html?token_id=${item.token_id}&pet_id=${petId}" class="btn btn-primary">Feed</a>`
-    }
-    if (CurrentBlock - item.blockMade > WaitTime + Some){
+//console.log(CurrentBlock - LastAte > WaitTime / 3  + Some);
+    const foodWait = parseInt(WaitTime) / 3  + Some;
+    const growWait = parseInt(WaitTime) + Some;
+    const foodTimer = parseInt(LastAte) + parseInt(foodWait) - CurrentBlock;
+    const growTimer = parseInt(item.blockMade) + growWait - CurrentBlock;
+//console.log(growWait);
+    if (CurrentBlock - item.blockMade > growWait) {
         growButton = `<a href="./grow.html?token_id=${item.token_id}&pet_id=${petId}" class="btn btn-primary">Grow</a>`
+    } else {
+        growButton = `<center>${growTimer} blocks more to Grow</center>`;
+    }    
+    if (CurrentBlock - LastAte > foodWait) {
+        feedButton = `<a href="./feed.html?token_id=${item.token_id}&pet_id=${petId}" class="btn btn-primary">Feed</a>`
+    } else {
+        feedButton = `<center><p>${foodTimer} blocks more to Feed</p></center>`;
     }
+
     let htmlString = `
         <p></p>
         <div class="card text-white bg-dark">   
           <img src="${item.metadata.image}" class="card-img" alt="Pet Image">
           ${growButton}
           ${feedButton}
-          <div class="card-body">
-            <center>
+          <div class="card-body"> 
+          <center>
             <h5 class="card-title">${item.metadata.name} ~ ${petName}</h5>
             <br>
             <p class="card-text">${item.metadata.description}</p>
