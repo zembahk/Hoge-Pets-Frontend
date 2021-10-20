@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    
+    <title>Hoge Pets</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/moralis/dist/moralis.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+
+    <div class="jumbotron jumbotron-fluid">
+      <article class="wrapper">
+      <div class="container">
+        <h1 class="display-4">Hoge Pets - Web Manager</h1>
+        <br>
+        <button onClick="window.location.href=window.location.href">Refresh Page</button>
+        Blocks need to be mined for changes to happen. Please wait a short time.
+      </div>
+    </div>
+     
+    <div class="container">
+        <div class="row" id="logout_button"></div>
+        <div class="row" id="get_button"></div>
+        <p><br><h2>Pets</h2></p>
+        <div class="row" id="pet"></div>
+        <p><br></p>
+        <p><br><h2>Food</h2></p>
+        <div class="row" id="food"></div>
+        <p><br><br></p>
+        
+    </div>
+    <script type="text/javascript" src="./abi.js"></script>
+    <script type="text/javascript" src="./main96.js"></script>
+  </body>
+</html>
