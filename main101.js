@@ -2,36 +2,37 @@ Moralis.start({ serverUrl: "https://9wqwwntdrdzo.moralishost.com:2053/server",
                 appId: "5pJOB2hAiXbOPHBlMuq8Sf6Q6jQlbuhobq9diG4c" });
 const CONTRACT_ADDRESS = "0x67b3c29A193334A6bC034843304A5b041D027d99";
 
-function fetchItemMetadata(Items, currentUser){
+async function fetchItemMetadata(Items, currentUser){
     let promises = [];
     for (let i = 0; i < Items.length; i++){
         let item = Items[i];
         let id = item.token_id;
-        let numberOfTokens = 1;
         promises.push(fetch("https://9wqwwntdrdzo.moralishost.com:2053/server/functions/getItem?_ApplicationId=5pJOB2hAiXbOPHBlMuq8Sf6Q6jQlbuhobq9diG4c&itemId=" + id)
-        .then(res => res.json())
-        .then(res => JSON.parse(res.result))
-        .then(res => {item.metadata = res})
-        .then(res => {
-            const options = { address: CONTRACT_ADDRESS, token_id: id, chain: "mumbai" };
-            return Moralis.Web3API.token.getTokenIdOwners(options);
-        })
-        .then( (res) => {
-            item.owners = [];
-            item.tokensOwned = [];
-            item.blockMade = [];
-            res.result.forEach(element => {
-                item.owners.push(element.owner_of);
-
-                if (currentUser.attributes.ethAddress == element.owner_of){
-//console.log(element);                    
-                    item.tokensOwned.push(element.token_id, element.amount);
-                    item.blockMade.push(element.block_number);
+            .then(res => res.json())
+            .then(res => JSON.parse(res.result))
+            .then(res => { item.metadata = res; })
+            .then(res => {
+                const options = { address: CONTRACT_ADDRESS, token_id: id, chain: "mumbai" };
+                return Moralis.Web3API.token.getTokenIdOwners(options);
+            })
+            .then((res) => {
+                item.owners = [];
+                item.tokensOwned = [];
+                item.blockMade = [];
+                //let morePromises = [];
+                for (let ii = 0; ii < res.result.length; ii++) {
+                    let resultItem = res.result[ii];
+                    
+                    if (resultItem && resultItem.owner_of == currentUser.attributes.ethAddress) {
+console.log(resultItem);
+                        item.owners.push(resultItem.owner_of);
+                        item.blockMade.push(resultItem.block_number);
+                        item.tokensOwned.push(resultItem.token_id, resultItem.amount);
+                    }
                 }
-            });
-//console.log(item)
-            return item;
-        }));
+                
+                return item;
+            }));
     }
     return Promise.all(promises);
 }
@@ -43,7 +44,27 @@ async function getPetData(address){
     return petData;
 }
 
-function renderPet(item, petId, petName, LastAte, CurrentBlock, WaitTime){
+async function getGrowData(address){
+    const growData = await fetch("https://9wqwwntdrdzo.moralishost.com:2053/server/functions/getGrowData?_ApplicationId=5pJOB2hAiXbOPHBlMuq8Sf6Q6jQlbuhobq9diG4c&address=" + address)
+        .then(res => res.json())
+        .then( (res) => {return res.result});
+    return growData;
+}
+
+async function statusBar(amount) {
+    //amount = parseInt(amount);
+    let str = `
+        <div class="progress">
+            <div class="progress-bar" role="progressbar" aria-valuenow="${amount}"
+              aria-valuemin="0" aria-valuemax="100" style="width:${amount}%">
+                <span class="sr-only">${amount}% wait time</span>
+            </div>
+        </div>
+    `
+    return str;
+}
+
+async function renderPet(item, petId, petName, LastAte, CurrentBlock, WaitTime, petCounter){
     const parent = document.getElementById("pet");
     let growButton = "";
     let feedButton = ""; 
@@ -52,20 +73,23 @@ function renderPet(item, petId, petName, LastAte, CurrentBlock, WaitTime){
     //const IsFed= await contract.methods.getIsFed(petId).call();
     //const CanGrow = await contract.methods.getCanGrow(petId).call();
 //console.log(CurrentBlock - LastAte > WaitTime / 3  + Some);
-    const foodWait = parseInt(WaitTime) / 3  + Some;
+    const foodWait = parseInt(WaitTime / 3)  + Some;
     const growWait = parseInt(WaitTime) + Some;
-    const foodTimer = parseInt(LastAte) + parseInt(foodWait) - CurrentBlock;
-    const growTimer = parseInt(item.blockMade) + growWait - CurrentBlock;
+    //             (block.number - hogePets[pet_id].lastAte) > (WaitLimit / 3)
+    //              block.number - hogePets[pet_id].lastGrown >= WaitLimit
+    const foodTimer = CurrentBlock - parseInt(LastAte);
+    const growTimer = CurrentBlock - parseInt(item.blockMade);
+//console.log(growTimer);    
 //console.log(growWait);
-    if (CurrentBlock - item.blockMade > growWait) {
+    if (growTimer / growWait > 1 && item.token_id != 0x0013) {
         growButton = `<a href="./grow.html?token_id=${item.token_id}&pet_id=${petId}" class="btn btn-primary">Grow</a>`
-    } else {
-        growButton = `<center>${growTimer} blocks more to Grow</center>`;
+    } else if (item.token_id != 0x0013) {
+        growButton = `<center>${growTimer} blocks more to Grow</center>` + await statusBar(growTimer / growWait * 100);
     }    
-    if (CurrentBlock - LastAte > foodWait) {
+    if (foodTimer / foodWait > 1) {
         feedButton = `<a href="./feed.html?token_id=${item.token_id}&pet_id=${petId}" class="btn btn-primary">Feed</a>`
     } else {
-        feedButton = `<center><p>${foodTimer} blocks more to Feed</p></center>`;
+        feedButton = `<center>${foodTimer} blocks more to Feed</center>` + await statusBar(foodTimer / foodWait * 100);
     }
 
     let htmlString = `
@@ -90,6 +114,7 @@ function renderPet(item, petId, petName, LastAte, CurrentBlock, WaitTime){
     col.className = "col col-md-6";
     col.innerHTML = htmlString;
     parent.appendChild(col);
+    return petCounter++;
 }
 
 async function renderItem(item){
@@ -141,7 +166,9 @@ async function initializeApp(){
     addLogout();
     switchNetworks(web3);
     const options = { address: CONTRACT_ADDRESS, chain: "mumbai" };
+    //const metadata = await Moralis.Web3API.token.getNFTMetadata(options);
     let Items = await Moralis.Web3API.token.getAllTokenIds(options);
+//console.log(Items);
     let WithMetadata = await fetchItemMetadata(Items.result, currentUser);
     let hasChamber = false;
     let petCounter = 0;
@@ -153,25 +180,32 @@ async function initializeApp(){
     const WaitTime = await contract.methods.WaitLimit().call();
     const userAddress = currentUser.attributes.ethAddress;
     const petsData = await getPetData(userAddress);
+    //const growData = await getGrowData(userAddress);    
 //console.log(WithMetadata);
+//console.log(growData);
+
     for (let i = 0; i < WithMetadata.length; i++) {
         const item = WithMetadata[i];
-        const found = item.owners.find(owner => owner == userAddress);
-        if (item.token_id < 4096 && found){
-            petId = petsData[petCounter].pet_id;
-            petName = petsData[petCounter].name;
-            lastAte = await contract.methods.getLastAte(petId).call();
-//console.log(CurrentBlock - item.blockMade > WaitTime);
-//console.log(WaitTime);
-            renderPet(item, petId, petName, lastAte, CurrentBlock, WaitTime);   
-            petCounter++;         
-            if (item.token_id == 0x0010){
-            hasChamber = true;
+        
+//console.log(item);
+//console.log(item.tokensOwned[1]);
+        if (item.token_id < 4096 && item.tokensOwned.length > 0){
+            for(let ii = 0; ii < item.tokensOwned[1]; ii++) {
+                petId = petsData[petCounter].pet_id;
+                petName = petsData[petCounter].name;
+//console.log(petName);
+                lastAte = await contract.methods.getLastAte(petId).call();
+                await renderPet(item, petId, petName, lastAte, CurrentBlock, WaitTime);                 
+                petCounter++;
+                if (item.token_id == 0x0010){
+                    hasChamber = true;
+                }
             }
-        } else if (found) {
+        } else if (item.tokensOwned.length > 0){
             renderItem(item)
-        } 
+        }
     }
+
 
     if (!hasChamber){
         let col = document.createElement("div");
