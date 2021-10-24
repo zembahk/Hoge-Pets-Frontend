@@ -1,11 +1,12 @@
 Moralis.start({ serverUrl: "https://9wqwwntdrdzo.moralishost.com:2053/server", 
                 appId: "5pJOB2hAiXbOPHBlMuq8Sf6Q6jQlbuhobq9diG4c" });
 const CONTRACT_ADDRESS = "0x67b3c29A193334A6bC034843304A5b041D027d99";
+const CHAIN_NAME = "mumbai"
 
 async function init(){
     let currentUser = Moralis.User.current();
     if(!currentUser){
-        window.location.pathname = "/index.html";
+        window.location.pathname = returnStr();
         return;
     }    
     grow();
@@ -14,13 +15,17 @@ async function init(){
 function loadButton(){
     alert("Pet Grown!");
     document.getElementById("button").innerHTML = "Home";
-    //window.location.href = './index.html';
+    window.location.href = returnStr();
+}
+
+function returnStr(){
+    return "/index.html?login=true";
 }
 
 async function grow(){
     if (document.getElementById("button").innerHTML == "Home"||
     document.getElementById("button").innerHTML == "Error - Go Home"){
-        window.location.href = './index.html';
+        window.location.href = returnStr();
         return;
     }
     if (document.getElementById("button").innerHTML != "Please Wait"){
@@ -41,7 +46,7 @@ async function grow(){
             console.log('transactionHash', tx)
         })
         .on('error', (error, receipt) => {
-            console.log('Participate Error - Receipt', error, receipt);
+            console.log('Error - Receipt', error, receipt);
             document.getElementById("button").innerHTML = "Error - Go Home";
         })
         .on("receipt", function(receipt){ loadButton(); });

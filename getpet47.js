@@ -5,7 +5,7 @@ const CONTRACT_ADDRESS = "0x67b3c29A193334A6bC034843304A5b041D027d99";
 async function init(){
     let currentUser = Moralis.User.current();
     if(!currentUser){
-        window.location.pathname = "/index.html";
+        window.location.pathname = returnStr();
         return;
     }
     web3 = await Moralis.Web3.enable();
@@ -16,9 +16,13 @@ async function init(){
     document.getElementById("address_input").value = accounts[0];
 }
 
+function returnStr(){
+    return "/index.html?login=true";
+}
+
 async function getpet(){
     if (document.getElementById("button").innerHTML == "Home"){
-        window.location.href = './index.html';
+        window.location.href = returnStr();
         return;
     }
     if (document.getElementById("button").innerHTML != "Please Wait"){

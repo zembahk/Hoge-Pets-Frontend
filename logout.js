@@ -1,6 +1,7 @@
 Moralis.start({ serverUrl: "https://9wqwwntdrdzo.moralishost.com:2053/server", 
                 appId: "5pJOB2hAiXbOPHBlMuq8Sf6Q6jQlbuhobq9diG4c" });
 const CONTRACT_ADDRESS = "0x67b3c29A193334A6bC034843304A5b041D027d99";
+const CHAIN_NAME = "mumbai"
 
 let currentUser = Moralis.User.current();
 if (currentUser){

@@ -1,6 +1,7 @@
 Moralis.start({ serverUrl: "https://9wqwwntdrdzo.moralishost.com:2053/server", 
                 appId: "5pJOB2hAiXbOPHBlMuq8Sf6Q6jQlbuhobq9diG4c" });
 const CONTRACT_ADDRESS = "0x67b3c29A193334A6bC034843304A5b041D027d99";
+const CHAIN_NAME = "mumbai"
 
 async function fetchItemMetadata(Items, currentUser){
     let promises = [];
@@ -12,25 +13,23 @@ async function fetchItemMetadata(Items, currentUser){
             .then(res => JSON.parse(res.result))
             .then(res => { item.metadata = res; })
             .then(res => {
-                const options = { address: CONTRACT_ADDRESS, token_id: id, chain: "mumbai" };
+                const options = { address: CONTRACT_ADDRESS, token_id: id, chain: CHAIN_NAME };
                 return Moralis.Web3API.token.getTokenIdOwners(options);
             })
             .then((res) => {
                 item.owners = [];
+                item.owner = [];
                 item.tokensOwned = [];
                 item.blockMade = [];
-                //let morePromises = [];
                 for (let ii = 0; ii < res.result.length; ii++) {
                     let resultItem = res.result[ii];
-                    
+                    item.owners.push(resultItem.owner_of);
                     if (resultItem && resultItem.owner_of == currentUser.attributes.ethAddress) {
-console.log(resultItem);
-                        item.owners.push(resultItem.owner_of);
+                        item.owner.push(resultItem.owner_of);
                         item.blockMade.push(resultItem.block_number);
                         item.tokensOwned.push(resultItem.token_id, resultItem.amount);
                     }
                 }
-                
                 return item;
             }));
     }
@@ -64,34 +63,31 @@ async function statusBar(amount) {
     return str;
 }
 
-async function renderPet(item, petId, petName, LastAte, CurrentBlock, WaitTime, petCounter){
+async function renderPet(item, petId, petName, LastAte, Owner, CurrentBlock, WaitTime){
     const parent = document.getElementById("pet");
     let growButton = "";
     let feedButton = ""; 
-    const Some = 50;
-    //petUpdate(petId, contract);
-    //const IsFed= await contract.methods.getIsFed(petId).call();
-    //const CanGrow = await contract.methods.getCanGrow(petId).call();
-//console.log(CurrentBlock - LastAte > WaitTime / 3  + Some);
+    const Some = 500;
     const foodWait = parseInt(WaitTime / 3)  + Some;
     const growWait = parseInt(WaitTime) + Some;
-    //             (block.number - hogePets[pet_id].lastAte) > (WaitLimit / 3)
-    //              block.number - hogePets[pet_id].lastGrown >= WaitLimit
     const foodTimer = CurrentBlock - parseInt(LastAte);
     const growTimer = CurrentBlock - parseInt(item.blockMade);
-//console.log(growTimer);    
-//console.log(growWait);
+    const food =item.token_id - 16 + 0x1000;
+    const options = { address: CONTRACT_ADDRESS, token_id: food, chain: CHAIN_NAME};
+    const tokenIdOwners= await Moralis.Web3API.token.getTokenIdOwners(options);
+    const found = tokenIdOwners.result.find(element => element.owner_of == Owner);
     if (growTimer / growWait > 1 && item.token_id != 0x0013) {
         growButton = `<a href="./grow.html?token_id=${item.token_id}&pet_id=${petId}" class="btn btn-primary">Grow</a>`
     } else if (item.token_id != 0x0013) {
         growButton = `<center>${growTimer} blocks more to Grow</center>` + await statusBar(growTimer / growWait * 100);
     }    
-    if (foodTimer / foodWait > 1) {
+    if (foodTimer / foodWait > 1 && found) {
         feedButton = `<a href="./feed.html?token_id=${item.token_id}&pet_id=${petId}" class="btn btn-primary">Feed</a>`
+    } else if (foodTimer / foodWait > 1 && !found){
+        feedButton = `<center>No food available</center>`;
     } else {
         feedButton = `<center>${foodTimer} blocks more to Feed</center>` + await statusBar(foodTimer / foodWait * 100);
     }
-
     let htmlString = `
         <p></p>
         <div class="card text-white bg-dark">   
@@ -111,10 +107,9 @@ async function renderPet(item, petId, petName, LastAte, CurrentBlock, WaitTime, 
         </div>
     `
     let col = document.createElement("div");
-    col.className = "col col-md-6";
+    col.className = "col-sm-12 col-md-6 col-lg-4 col-xl-3";
     col.innerHTML = htmlString;
     parent.appendChild(col);
-    return petCounter++;
 }
 
 async function renderItem(item){
@@ -136,7 +131,7 @@ async function renderItem(item){
         </div>
     `
     let col = document.createElement("div");
-    col.className = "col col-md-6";
+    col.className = "col-sm-12 col-md-6 col-lg-4 col-xl-3";
     col.innerHTML = htmlString;
     parent.appendChild(col);
 }
@@ -148,11 +143,17 @@ async function addLogout(){
     document.getElementById("logout_button").appendChild(col);
 }
 
+//
 async function initializeApp(){
+    let urlParams = new URLSearchParams(window.location.search);
+    let loggedIn = "";
+    try{
+        loggedIn = urlParams.get("login");
+    }catch{console.log(loggedIn)}
+    
     let currentUser = Moralis.User.current();
     web3 = await Moralis.Web3.enable();
-    
-    if(!currentUser){
+    if(!currentUser && !loggedIn){
         try {
             await Moralis.Web3.authenticate({signingMessage:"Welcome to Hoge Pets! \n Please sign in to play."});
             window.location.href=window.location.href
@@ -162,13 +163,12 @@ async function initializeApp(){
             return;
         }
     }
+
     console.log("Current user logged in as " + currentUser.id);
     addLogout();
     switchNetworks(web3);
-    const options = { address: CONTRACT_ADDRESS, chain: "mumbai" };
-    //const metadata = await Moralis.Web3API.token.getNFTMetadata(options);
+    const options = { address: CONTRACT_ADDRESS, chain: CHAIN_NAME };
     let Items = await Moralis.Web3API.token.getAllTokenIds(options);
-//console.log(Items);
     let WithMetadata = await fetchItemMetadata(Items.result, currentUser);
     let hasChamber = false;
     let petCounter = 0;
@@ -176,26 +176,18 @@ async function initializeApp(){
     let petName = "";
     let contract = new web3.eth.Contract(contractAbi, CONTRACT_ADDRESS);
     const CurrentBlock = await web3.eth.getBlockNumber();
-    //const Buffer = 25;
     const WaitTime = await contract.methods.WaitLimit().call();
     const userAddress = currentUser.attributes.ethAddress;
     const petsData = await getPetData(userAddress);
-    //const growData = await getGrowData(userAddress);    
-//console.log(WithMetadata);
-//console.log(growData);
-
     for (let i = 0; i < WithMetadata.length; i++) {
         const item = WithMetadata[i];
-        
-//console.log(item);
-//console.log(item.tokensOwned[1]);
+        const owner = item.owner[0];
         if (item.token_id < 4096 && item.tokensOwned.length > 0){
             for(let ii = 0; ii < item.tokensOwned[1]; ii++) {
                 petId = petsData[petCounter].pet_id;
                 petName = petsData[petCounter].name;
-//console.log(petName);
                 lastAte = await contract.methods.getLastAte(petId).call();
-                await renderPet(item, petId, petName, lastAte, CurrentBlock, WaitTime);                 
+                await renderPet(item, petId, petName, lastAte, owner, CurrentBlock, WaitTime);                 
                 petCounter++;
                 if (item.token_id == 0x0010){
                     hasChamber = true;
@@ -205,8 +197,6 @@ async function initializeApp(){
             renderItem(item)
         }
     }
-
-
     if (!hasChamber){
         let col = document.createElement("div");
         col.className = "col col-md-8";
@@ -217,7 +207,6 @@ async function initializeApp(){
         `;
         document.getElementById("get_button").appendChild(col);
     }
-
 }
 
 async function switchNetworks(web3){
@@ -241,8 +230,7 @@ async function switchNetworks(web3){
                         },
                         rpcUrls: ["https://speedy-nodes-nyc.moralis.io/cebf590f4bcd4f12d78ee1d4/polygon/mumbai"],
                         blockExplorerUrls: ["https://explorer-mumbai.maticvigil.com/"],
-                        iconUrls: ["https://s2.coinmarketcap.com/static/img/coins/64x64/3890.png"],
-
+                        iconUrls: ["https://s2.coinmarketcap.com/static/img/coins/64x64/3890.png"]
                     }],
                 });
             } catch (addError){
@@ -251,7 +239,6 @@ async function switchNetworks(web3){
         }
         console.log(error.message); 
     }
-    
 }
 
 async function petUpdate(petId, contract){
