@@ -153,10 +153,10 @@ async function initializeApp(){
     
     let currentUser = Moralis.User.current();
     web3 = await Moralis.Web3.enable();
-    if(!currentUser && !loggedIn){
+    if(!currentUser || !loggedIn){
         try {
             await Moralis.Web3.authenticate({signingMessage:"Welcome to Hoge Pets! \n Please sign in to play."});
-            window.location.href=window.location.href
+            window.location.href="/index.html?login=true";
             return;
         } catch (error) {
             console.log("Error:\n" + error +  "\n\nError message:\n" + error.message);

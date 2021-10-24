@@ -44,6 +44,7 @@ async function getpet(){
                     console.log(receipt);
                     alert("Incu-Chamber Ready! \n\nPlease wait a few blocks to be mined for it to show up in your invertory.");
                     document.getElementById("button").innerHTML = "Home";
+                    window.location.href = returnStr();
             });
     }
 }
