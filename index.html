@@ -17,15 +17,23 @@
     <div class="jumbotron jumbotron-fluid">
       <article class="wrapper">
       <div class="container">
-        <h1 class="display-4">Hoge Pets - Web Manager</h1>
-        <br>
-        <button onClick="window.location.href=window.location.href">Refresh Page</button>
-        Blocks need to be mined for changes to happen. Please wait a short time.
+        <div class="row" id="page-header">
+          <div class="col" id="header">
+            <h1 class="display-4">Hoge Pets - Web Manager</h1>
+            <br>
+            <button onClick="window.location.href=window.location.href">Refresh Page</button>
+          </div>
+        </div>
       </div>
     </div>
-     
+    
     <div class="container">
-        <div class="row" id="logout_button"></div>
+      <div class="header-msg">Please wait a short time.<br>Blocks need to be mined for changes to happen.</div>
+        <div class="row" id="logout_button"></div>  
+        <div id="gas">        
+          <h4>Average Gas Prices</h4>
+          <ul id="gas-stats"></ul>
+        </div>
         <div class="row" id="get_button"></div>
         <p><br><h2>Pets</h2></p>
         <div class="row" id="pet"></div>
@@ -35,6 +43,6 @@
         <p><br><br></p>
     </div>
     <script type="text/javascript" src="./abi.js"></script>
-    <script type="text/javascript" src="./main109.js"></script>
+    <script type="text/javascript" src="./main110.js"></script>
   </body>
 </html>

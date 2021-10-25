@@ -96,7 +96,7 @@ async function renderPet(item, petId, petName, LastAte, Owner, CurrentBlock, Wai
           ${feedButton}
           <div class="card-body"> 
           <center>
-            <h5 class="card-title">${item.metadata.name} ~ ${petName}</h5>
+            <h5 class="card-title">${item.metadata.name}<br>~ ${petName} ~</h5>
             <br>
             <p class="card-text">${item.metadata.description}</p>
             <p class="card-text">You Own: ${item.tokensOwned[1]}</p>
@@ -143,8 +143,10 @@ async function addLogout(){
     document.getElementById("logout_button").appendChild(col);
 }
 
-//
+
+
 async function initializeApp(){
+    getAverageGasPrices();
     let urlParams = new URLSearchParams(window.location.search);
     let loggedIn = "";
     try{
@@ -246,5 +248,46 @@ async function petUpdate(petId, contract){
     await contract.methods.petUpdate(petId).call();
 }
 
+
+async function getAverageGasPrices() {
+    const user = Moralis.User.current();
+    if (user) {
+      getUserTransactions(user);
+    } else {
+        return;
+    }
+    const results = await Moralis.Cloud.run("getAvgGas");
+    //console.log("average user gas prices:", results);
+    renderGasStats(results);
+}
+
+function renderGasStats(data) {
+    const container = document.getElementById("gas-stats");
+    container.innerHTML = data
+      .map(function (row, rank) {
+        return `<li> ${Math.round(row.avgGas)} gwei</li>`;
+      })
+      .join("");
+}
+
+// HISTORICAL TRANSACTIONS
+async function getUserTransactions(user) {
+    // create query
+    const query = new Moralis.Query("EthTransactions");
+    query.equalTo("from_address", user.get("ethAddress"));
+    // subscribe to query updates
+    const subscription = await query.subscribe();
+    handleNewTransaction(subscription);
+    // run query
+    const results = await query.find();
+    console.log("user transactions:", results);
+}
+// REAL-TIME TRANSACTIONS
+async function handleNewTransaction(subscription) {
+    // log each new transaction
+    subscription.on("create", function (data) {
+        console.log("new transaction: ", data);
+    });
+}
 
 initializeApp();

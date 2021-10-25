@@ -1,7 +1,7 @@
 {
-"image": "https://9wqwwntdrdzo.moralishost.com/img/hoge-pet-incu-chamber.svg",
-"description": "New Hoge pet is incubating in this chamber.",
-"name": "Incu-Chamber",
-"symbol": "HOGEPET"
+    "name": "Incu-Chamber",
+    "symbol": "HOGEPET",
+    "description": "New Hoge pet is incubating in this chamber.",
+    "image": "https://9wqwwntdrdzo.moralishost.com/img/hoge-pet-incu-chamber.svg"
 }
 

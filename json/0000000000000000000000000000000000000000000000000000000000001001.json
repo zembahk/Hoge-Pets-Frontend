@@ -1,7 +1,7 @@
 {
-"image": "https://9wqwwntdrdzo.moralishost.com/img/New-Food.png",
-"description": "Food for when a new Hoge pet gets hungry.",
-"name": "New Hoge Pet Food",
-"symbol": "HOGEPET"
+    "name": "New Hoge Pet Food",
+    "symbol": "HOGEPET",
+    "description": "Food for when a new Hoge pet gets hungry.",
+    "image": "https://9wqwwntdrdzo.moralishost.com/img/New-Food.png"
 }
 

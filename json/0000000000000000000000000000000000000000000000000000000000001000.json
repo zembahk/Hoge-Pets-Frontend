@@ -1,7 +1,8 @@
 {
-"image": "https://9wqwwntdrdzo.moralishost.com/img/Incu-Food.png",
-"description": "Food to help your Hoge pet grow.",
-"name": "Incu-Chamber Pet Food",
-"symbol": "HOGEPET"
+    "name": "Incu-Chamber Pet Food",
+    "symbol": "HOGEPET",
+    "description": "Food to help your Hoge pet grow.",
+    "image": "https://9wqwwntdrdzo.moralishost.com/img/Incu-Food.png"
 }
+
 
